@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package analytics.runtime;
+
+service AnalyticsRuntime {
+  rpc Execute (ExecuteRequest) returns (ExecuteResponse);
+}
+
+message ExecuteRequest {
+  string operation_name = 1;
+  string payload_json = 2;
+  string correlation_id = 3;
+}
+
+message ExecuteResponse {
+  string result_json = 1;
+}

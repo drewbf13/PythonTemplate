@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+grpcio
+grpcio-tools
+grpcio-reflection
+azure-identity
+pyodbc
+pydantic
+pydantic-settings
