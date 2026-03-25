@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-runtime
+  labels:
+    app: analytics-runtime
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: analytics-runtime
+  template:
+    metadata:
+      labels:
+        app: analytics-runtime
+    spec:
+      # Optional: set this to a workload-identity-enabled service account in AKS.
+      serviceAccountName: analytics-runtime-sa
+      containers:
+        - name: analytics-runtime
+          image: youracr.azurecr.io/analytics-runtime-template:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http-rest
+              containerPort: 8000
+              protocol: TCP
+            - name: grpc
+              containerPort: 50051
+              protocol: TCP
+          env:
+            # Option 1: direct SQL connection string from a Secret.
+            - name: SQL_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-runtime-secrets
+                  key: sql-connection-string
+                  optional: true
+
+            # Option 2: Azure SQL token auth settings (if not using SQL_CONNECTION_STRING).
+            - name: SQL_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-runtime-secrets
+                  key: sql-server
+                  optional: true
+            - name: SQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-runtime-secrets
+                  key: sql-database
+                  optional: true
+            - name: SQL_PORT
+              value: "1433"
+            - name: AZURE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-runtime-secrets
+                  key: azure-client-id
+                  optional: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000
+      securityContext:
+        fsGroup: 1000
