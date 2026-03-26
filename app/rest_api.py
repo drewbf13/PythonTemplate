@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 
+from app.auth import require_rest_api_key
 from app.executor import OperationExecutionError, execute
 from app.models import ExecuteRequestModel, ExecuteResponseModel, HealthResponseModel, OperationsResponseModel
 from app.operation_registry import list_operations
@@ -14,12 +15,12 @@ async def health() -> HealthResponseModel:
     return HealthResponseModel()
 
 
-@app.get("/operations", response_model=OperationsResponseModel)
+@app.get("/operations", response_model=OperationsResponseModel, dependencies=[Depends(require_rest_api_key)])
 async def operations() -> OperationsResponseModel:
     return OperationsResponseModel(operations=list_operations())
 
 
-@app.post("/execute", response_model=ExecuteResponseModel)
+@app.post("/execute", response_model=ExecuteResponseModel, dependencies=[Depends(require_rest_api_key)])
 async def execute_operation(request: ExecuteRequestModel) -> ExecuteResponseModel:
     try:
         result_json = await execute(request.operation_name, request.payload_json, request.correlation_id)

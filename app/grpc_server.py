@@ -5,6 +5,7 @@ from grpc_reflection.v1alpha import reflection
 
 import analytics_runtime_pb2
 import analytics_runtime_pb2_grpc
+from app.auth import ApiKeyInterceptor
 from app.executor import OperationExecutionError, execute
 
 
@@ -23,7 +24,7 @@ class AnalyticsRuntimeServicer(analytics_runtime_pb2_grpc.AnalyticsRuntimeServic
 
 
 async def serve_grpc(host: str = "0.0.0.0", port: int = 50051) -> None:
-    server = grpc.aio.server()
+    server = grpc.aio.server(interceptors=[ApiKeyInterceptor()])
     analytics_runtime_pb2_grpc.add_AnalyticsRuntimeServicer_to_server(AnalyticsRuntimeServicer(), server)
 
     service_names = (
