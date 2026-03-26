@@ -57,12 +57,36 @@ class AzureSqlClient:
             row = cursor.fetchone()
             return bool(row and row[0] == 1)
 
-    def list_items(self, table_name: str = "items", limit: int = 10) -> list[dict[str, Any]]:
-        """Optional sample query helper for template extension."""
+    def list_items(
+        self,
+        table_name: str,
+        limit: int = 10,
+        filters: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        allowed_tables = {}
+        allowed_columns = {}
+    
+        if table_name not in allowed_tables:
+            raise ValueError(f"Invalid table name: {table_name}")
+    
         with self.connect() as conn:
             cursor = conn.cursor()
-            cursor.execute(f"SELECT TOP (?) * FROM {table_name}", limit)
+    
+            query = f"SELECT TOP (?) * FROM {table_name}"
+            params: list[Any] = [limit]
+    
+            if filters:
+                clauses = []
+                for key, value in filters.items():
+                    if key not in allowed_columns:
+                        raise ValueError(f"Invalid filter column: {key}")
+                    clauses.append(f"{key} = ?")
+                    params.append(value)
+    
+                query += " WHERE " + " AND ".join(clauses)
+    
+            cursor.execute(query, params)
             columns = [column[0] for column in cursor.description]
             rows = cursor.fetchall()
-
+    
         return [dict(zip(columns, row, strict=False)) for row in rows]

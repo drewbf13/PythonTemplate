@@ -7,10 +7,12 @@ if ([string]::IsNullOrWhiteSpace($apiKey)) {
 $headers = @{ "x-api-key" = $apiKey }
 
 Write-Host "GET /health"
-Invoke-RestMethod -Method Get -Uri "http://localhost:8000/health"
+$health = Invoke-RestMethod -Method Get -Uri "http://localhost:8000/health"
+$health | ConvertTo-Json -Depth 10 | Write-Host
 
 Write-Host "GET /operations"
-Invoke-RestMethod -Method Get -Uri "http://localhost:8000/operations" -Headers $headers
+$ops = Invoke-RestMethod -Method Get -Uri "http://localhost:8000/operations" -Headers $headers
+$ops | ConvertTo-Json -Depth 10 | Write-Host
 
 Write-Host "POST /execute"
 $body = @{
@@ -19,4 +21,10 @@ $body = @{
   correlation_id = "rest-local-test"
 } | ConvertTo-Json
 
-Invoke-RestMethod -Method Post -Uri "http://localhost:8000/execute" -Headers $headers -ContentType "application/json" -Body $body
+$result = Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:8000/execute" `
+  -Headers $headers `
+  -ContentType "application/json" `
+  -Body $body
+
+$result | ConvertTo-Json -Depth 10 | Write-Host

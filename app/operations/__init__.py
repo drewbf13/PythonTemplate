@@ -1,3 +1,7 @@
-"""Import operations to ensure they are registered."""
+"""Import all operation modules so decorators run and register them."""
 
-from app.operations import example_operation as _example_operation  # noqa: F401
+import importlib
+import pkgutil
+
+for _, module_name, _ in pkgutil.iter_modules(__path__):
+    importlib.import_module(f"{__name__}.{module_name}")
