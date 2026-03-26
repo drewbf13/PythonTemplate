@@ -43,6 +43,7 @@ myapp/
 
 - `POST /execute`, `GET /health`, `GET /operations` over REST
 - `analytics.runtime.AnalyticsRuntime/Execute` over gRPC
+- API key auth for protected REST and gRPC calls (`x-api-key`)
 - Shared execution layer (`app/executor.py`) for both transports
 - Decorator-based operation registry (`app/operation_registry.py`)
 - Generic example operation (`ExampleOperation`) with optional DB connectivity check
@@ -110,6 +111,7 @@ docker build -t analytics-runtime-template:latest .
 
 ```powershell
 docker run --rm -p 8000:8000 -p 50051:50051 \
+  -e API_KEY="replace-with-a-strong-key" \
   -e SQL_CONNECTION_STRING="Driver={ODBC Driver 18 for SQL Server};Server=tcp:host,1433;Database=mydb;UID=user;PWD=pass;Encrypt=yes;TrustServerCertificate=no;" \
   analytics-runtime-template:latest
 ```
@@ -147,7 +149,8 @@ kubectl create secret generic analytics-runtime-secrets \
   --from-literal=sql-connection-string="Driver={ODBC Driver 18 for SQL Server};Server=tcp:host,1433;Database=mydb;UID=user;PWD=pass;Encrypt=yes;TrustServerCertificate=no;" \
   --from-literal=sql-server="your-server.database.windows.net" \
   --from-literal=sql-database="your-database" \
-  --from-literal=azure-client-id="<optional-user-assigned-managed-identity-client-id>"
+  --from-literal=azure-client-id="<optional-user-assigned-managed-identity-client-id>" \
+  --from-literal=api-key="replace-with-a-strong-key"
 ```
 
 > Set `image:` in `k8s/deployment.yaml` to your pushed image (for example, ACR).
@@ -158,7 +161,7 @@ kubectl create secret generic analytics-runtime-secrets \
 
 ```powershell
 Invoke-RestMethod -Method Get -Uri "http://localhost:8000/health"
-Invoke-RestMethod -Method Get -Uri "http://localhost:8000/operations"
+Invoke-RestMethod -Method Get -Uri "http://localhost:8000/operations" -Headers @{"x-api-key"="replace-with-your-key"}
 
 $body = @{
   operation_name = "ExampleOperation"
@@ -166,7 +169,7 @@ $body = @{
   correlation_id = "manual-rest"
 } | ConvertTo-Json
 
-Invoke-RestMethod -Method Post -Uri "http://localhost:8000/execute" -ContentType "application/json" -Body $body
+Invoke-RestMethod -Method Post -Uri "http://localhost:8000/execute" -Headers @{"x-api-key"="replace-with-your-key"} -ContentType "application/json" -Body $body
 ```
 
 ### Scripted
@@ -203,7 +206,7 @@ gRPC uses Protobuf binary messages on the wire. `grpcurl` is a client helper tha
 
 ```powershell
 $body = '{"operation_name":"ExampleOperation","payload_json":"{}"}'
-$body | Out-String | grpcurl -plaintext -d '@' localhost:50051 analytics.runtime.AnalyticsRuntime/Execute
+$body | Out-String | grpcurl -plaintext -H 'x-api-key: replace-with-your-key' -d '@' localhost:50051 analytics.runtime.AnalyticsRuntime/Execute
 ```
 
 ### Scripted
@@ -221,6 +224,7 @@ Environment variables supported:
 - `SQL_DATABASE` (required for DB use)
 - `SQL_PORT` (optional, default `1433`)
 - `AZURE_CLIENT_ID` (optional, used for user-assigned managed identity)
+- `API_KEY` (required for `/operations`, `/execute`, and gRPC `Execute`; sent via `x-api-key`)
 
 `app/db.py` uses:
 

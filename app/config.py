@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     sql_database: str | None = None
     sql_port: int = 1433
     azure_client_id: str | None = None
+    api_key: str | None = None
 
 
 @lru_cache

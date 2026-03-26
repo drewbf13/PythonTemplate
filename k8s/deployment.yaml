@@ -57,6 +57,12 @@ spec:
                   name: analytics-runtime-secrets
                   key: azure-client-id
                   optional: true
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: analytics-runtime-secrets
+                  key: api-key
+                  optional: false
           readinessProbe:
             httpGet:
               path: /health
