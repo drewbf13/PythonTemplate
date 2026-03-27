@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
 import uvicorn
 
 from app.grpc_server import serve_grpc
 from app.rest_api import app
-from app import operations as _operations  # noqa: F401
+from app.runtime_service import initialize_host
 
 
 async def serve_rest(host: str = "0.0.0.0", port: int = 8000) -> None:
@@ -16,11 +17,17 @@ async def serve_rest(host: str = "0.0.0.0", port: int = 8000) -> None:
 
 
 async def main() -> None:
+    logging.basicConfig(level=logging.INFO)
+    initialize_host()
     await asyncio.gather(
         serve_rest(),
         serve_grpc(),
     )
 
 
-if __name__ == "__main__":
+def run() -> None:
     asyncio.run(main())
+
+
+if __name__ == "__main__":
+    run()

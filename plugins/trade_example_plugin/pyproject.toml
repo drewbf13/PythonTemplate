@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trade-example-analytics-plugin"
+version = "0.1.0"
+description = "Example analytics plugin for runtime template"
+requires-python = ">=3.10"
+dependencies = ["analytics-runtime-template"]
+
+[tool.setuptools]
+packages = ["trade_example_plugin"]
+
+[project.entry-points."analytics.plugins"]
+trade_example = "trade_example_plugin.plugin:get_plugin"

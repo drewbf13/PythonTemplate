@@ -5,9 +5,9 @@ from fastapi import Depends, FastAPI, HTTPException
 from app.auth import require_rest_api_key
 from app.executor import OperationExecutionError, execute
 from app.models import ExecuteRequestModel, ExecuteResponseModel, HealthResponseModel, OperationsResponseModel
-from app.operation_registry import list_operations
+from app.runtime_service import get_host
 
-app = FastAPI(title="Analytics Runtime Template", version="0.1.0")
+app = FastAPI(title="Analytics Runtime Template", version="0.2.0")
 
 
 @app.get("/health", response_model=HealthResponseModel)
@@ -17,7 +17,7 @@ async def health() -> HealthResponseModel:
 
 @app.get("/operations", response_model=OperationsResponseModel, dependencies=[Depends(require_rest_api_key)])
 async def operations() -> OperationsResponseModel:
-    return OperationsResponseModel(operations=list_operations())
+    return OperationsResponseModel(operations=get_host().list_operations())
 
 
 @app.post("/execute", response_model=ExecuteResponseModel, dependencies=[Depends(require_rest_api_key)])
